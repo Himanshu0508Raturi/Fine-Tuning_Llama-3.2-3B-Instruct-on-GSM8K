@@ -3,9 +3,9 @@ import time
  
 import torch
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from schema import SolveRequest, SolveResponse
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
+from utils import extract_final_answer
  
 MODEL_ID = "raturihimanshu077/tinyllama-1.1b-gsm8k-nf4"
 HF_TOKEN = os.environ.get("HF_TOKEN")
@@ -54,30 +54,6 @@ def load_model():
  
     print(f"Model loaded on {device}.")
  
- 
-class SolveRequest(BaseModel):
-    question: str = Field(..., min_length=1, description="A math word problem to solve.")
-    max_new_tokens: int = Field(
-        default=MAX_NEW_TOKENS, ge=16, le=1024,
-        description="Max tokens to generate for the answer."
-    )
- 
- 
-class SolveResponse(BaseModel):
-    question: str
-    reasoning: str
-    final_answer: str | None
-    latency_seconds: float
-  
-import re
- 
- 
-def extract_final_answer(text: str) -> str | None:
-    match = re.search(r"####\s*([\-0-9,\.]+)", text)
-    if match:
-        return match.group(1).replace(",", "").strip()
-    numbers = re.findall(r"[\-0-9,\.]+", text)
-    return numbers[-1].replace(",", "").strip() if numbers else None
  
  
  
